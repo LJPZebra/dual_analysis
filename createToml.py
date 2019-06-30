@@ -3,11 +3,14 @@ import toml
 import numpy as np
 import argparse
 import os
+import datetime
 
 def createToml(path="", fileName=None):
 
+    folders = os.path.abspath(path).split(os.sep)
+    
     if not fileName:
-        fileName = os.path.basename(os.path.normpath(path))
+        fileName = folders[-2].replace("-", "") + folders[-1].replace("Run ", "").replace(".", "")
 
     milestones = pandas.read_csv(path + "Milestones.txt", sep="\t", header=None)
     parameters = pandas.read_csv(path + "Parameters.txt", sep="\t", header=None)
@@ -15,8 +18,8 @@ def createToml(path="", fileName=None):
     trackingData = pandas.read_csv(path + "Tracking_Result/tracking.txt", sep="\t")
 
     info = { "title" : fileName, "path" : path, "author" : "Benjamin Gallois" }
-    fish = { "age" : int(parameters[1][1]), "type" : "wt", "remark" : ""}
-    experiment = { "product" : parameters[1][2].lower(), "concentration" : float("".join([i for i in parameters[1][3] if i.isdigit()])), "order" : "", "buffer1" : [int(milestones[0][1]), int(milestones[0][2])], "buffer2" : [int(milestones[0][5]), int(milestones[0][6])], "product1" : [int(milestones[0][3]), int(milestones[0][4])], "product2" : [int(milestones[0][7]), int(timestamps[0].tail(1))]}
+    fish = { "age" : int(parameters[1][1]), "date" : datetime.datetime.strptime(parameters[1][0], "%Y-%m-%d"),  "type" : "wt", "remark" : ""}
+    experiment = {"date" : datetime.datetime.strptime(folders[-2], "%Y-%m-%d"), "product" : parameters[1][2].lower(), "concentration" : float("".join([i for i in parameters[1][3] if i.isdigit()])), "order" : "", "buffer1" : [int(milestones[0][1]), int(milestones[0][2])], "buffer2" : [int(milestones[0][5]), int(milestones[0][6])], "product1" : [int(milestones[0][3]), int(milestones[0][4])], "product2" : [int(milestones[0][7]), int(timestamps[0].tail(1))]}
     metadata = { "image" : timestamps[0], "time" : timestamps[1] }
 
     tracking = {}
