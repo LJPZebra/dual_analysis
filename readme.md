@@ -27,9 +27,11 @@ title = "../test/"
 author = "Benjamin Gallois"
 [fish]
 age = 6
+date = ""
 type = "wt"
 remark = ""
 [experiment]
+date = ""
 product = "atp"
 concentration = 125.0
 order = ""
@@ -48,14 +50,14 @@ time = [ ]
 
 In the old version of the Dual control software, the Timestamps.txt was not generated but embedded in the frame. To extract the metadata and create the Timestamps.txt used the CLI command:
 ```
-python extractTimestamp path_to_the_raw_folder
+python extractTimestamp.py path_to_the_raw_folder 
 ```
 
 ### Generate the toml file
 
 Use the cli command:
 ```
-python createToml path_to_the_raw_folder --name outputName
+python createToml.py path_to_the_raw_folder --name outputName -o dest
 ```
 
 > For each experiment, for product start image is manually set to account for a possible delay due to air in the syringe or variable transitory phase.
@@ -65,6 +67,5 @@ python createToml path_to_the_raw_folder --name outputName
 Use the cli command:
 ```
 python3 createToml.py "$(python3 listPath.py root)"
-
 ```
 
