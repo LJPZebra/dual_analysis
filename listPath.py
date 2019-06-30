@@ -5,8 +5,7 @@ def listPath(path):
     pathList = []
     for root, __, files in os.walk(path):
         if files and files[0][0:5] == "Frame":
-            print(root)
-            pathList.append(root)
+            pathList.append(os.path.abspath(root))
 
     return pathList
 

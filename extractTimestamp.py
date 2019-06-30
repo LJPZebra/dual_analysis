@@ -1,26 +1,33 @@
-import  os
+import os
 import pandas
 import argparse
 import glob
 
 def extractTimestamp(path=""):
 
-    milestones = pandas.read_csv(path + "Milestones.txt", sep="\t", header=None)
+    milestones = pandas.read_csv(path + "/Milestones.txt", sep="\t", header=None)
     timeList = list(milestones[0])
 
-    with open(path + "/TimestampsTest.txt", "w") as f:
-        frames = glob.glob("*Frame_*")
+    with open(path + "/Timestamps.txt", "w") as f:
+        frames = glob.glob(path + "*Frame_*")
+        frames.sort()
         for i, j in enumerate(frames):
-            r = open(j, "r")
-            imageNumber = int(j[j.find("Frame_"): -4])
-            timestamp = r.readlines()[-1][line.find(":") + 1 ::]
+            with open(j, encoding="utf8", errors="ignore") as r:
+              imageNumber = int(j[j.find("Frame_") + 6: -4])
+              line = r.readlines()[-1]
+              place = line.find(":")
+              timestamp = line[place + 1 ::]
 
             if imageNumber in timeList:
                timestamp = milestones[1][timeList.index(imageNumber)] 
-            f.write(imageNumber + '\t' + timestamp + '\n')
+            f.write(str(imageNumber) + '\t' + str(timestamp) + '\n')
 
 
 parser = argparse.ArgumentParser(description="Extract the timestamp from the images") 
 parser.add_argument("path", help="Path to the folder of the experiment")
 args = parser.parse_args()
-extractTimestamp(args.path)
+args.path = args.path.replace("[", "").replace("]", "").replace("'", "").split(",")
+for i in args.path:
+  extractTimestamp(i)
+  print("Done " + i)
+
