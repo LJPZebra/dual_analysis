@@ -5,7 +5,7 @@ import argparse
 import os
 import datetime
 
-def createToml(path="", fileName=None):
+def createToml(path="", fileName=None, dest =""):
 
     folders = os.path.abspath(path).split(os.sep)
     
@@ -35,16 +35,21 @@ def createToml(path="", fileName=None):
 
     dic = {"info" : info, "fish" : fish, "experiment" : experiment, "metadata" : metadata, "tracking" : tracking}
 
-    with open(path + fileName + ".toml", "w") as f:
-        toml.dump(dic, f)
+    if not dest:
+        with open(path + fileName + ".toml", "w") as f:
+            toml.dump(dic, f)
+    else:
+        with open(dest + fileName + ".toml", "w") as f:
+            toml.dump(dic, f)
 
 
 parser = argparse.ArgumentParser(description="Create a toml file that contains all the information about the experiment")
 parser.add_argument("path", help="Path to the folder of the experiment")
 parser.add_argument("--name", dest="name", help="Name of the output toml file")
+parser.add_argument("-o", dest="dest", help="Path to a folder to store the toml file")
 
 args = parser.parse_args()
 args.path = args.path.replace("[", "").replace("]", "").replace("'", "").split(",")
 for i in args.path:
-    createToml(i, args.name)
+    createToml(i, args.name, args.dest)
 print("Done")
