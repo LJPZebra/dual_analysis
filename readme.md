@@ -64,6 +64,7 @@ python createToml path_to_the_raw_folder --name outputName
 
 Use the cli command:
 ```
-path=$(python listPath root) | python createToml $path --name outputName
+python3 createToml.py "$(python3 listPath.py root)"
+
 ```
 
