@@ -5,12 +5,19 @@ import argparse
 import os
 import datetime
 
-def createToml(path="", fileName=None, dest =""):
+def createToml(path="", fileName=None, dest ="", erase=False):
 
     folders = os.path.abspath(path).split(os.sep)
     
     if not fileName:
         fileName = folders[-2].replace("-", "") + folders[-1].replace("Run ", "").replace(".", "")
+
+    if not dest:
+        if os.path.isfile(path + fileName + ".toml"):
+            return
+    else:
+        if os.path.isfile(dest + fileName + ".toml"):
+            return
 
     milestones = pandas.read_csv(path + "Milestones.txt", sep="\t", header=None)
     parameters = pandas.read_csv(path + "Parameters.txt", sep="\t", header=None)
@@ -47,9 +54,12 @@ parser = argparse.ArgumentParser(description="Create a toml file that contains a
 parser.add_argument("path", help="Path to the folder of the experiment")
 parser.add_argument("--name", dest="name", help="Name of the output toml file")
 parser.add_argument("-o", dest="dest", help="Path to a folder to store the toml file")
+parser.add_argument("--erase", dest="erase", help="Erase the toml file")
 
 args = parser.parse_args()
-args.path = args.path.replace("[", "").replace("]", "").replace("'", "").split(",")
+args.path = args.path.replace('"', "").split(",")
+print(args.path)
 for i in args.path:
-    createToml(i, args.name, args.dest)
+  if i:
+    createToml(i, args.name, args.dest, args.erase)
 print("Done")
