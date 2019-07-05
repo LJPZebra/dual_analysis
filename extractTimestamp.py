@@ -26,7 +26,7 @@ def extractTimestamp(path=""):
 parser = argparse.ArgumentParser(description="Extract the timestamp from the images") 
 parser.add_argument("path", help="Path to the folder of the experiment")
 args = parser.parse_args()
-args.path = args.path.replace("[", "").replace("]", "").replace("'", "").split(",")
+args.path = args.path.replace('"', "").split(",")
 for i in args.path:
   extractTimestamp(i)
   print("Done " + i)
