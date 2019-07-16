@@ -2,11 +2,10 @@ import os
 import argparse
 
 def listPath(path):
-    pathList = '"'
+    pathList = ''
     for root, __, files in os.walk(path):
         if files and files[0][0:5] == "Frame":
-            pathList += str(os.path.abspath(root) + os.sep) + ","
-    pathList += '"'
+            pathList += str("'" + os.path.abspath(root) + os.sep + "'") + " "
 
     return pathList
 
