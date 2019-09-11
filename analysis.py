@@ -285,6 +285,6 @@ parser.add_argument("path", nargs='+', help="List of path")
 args = parser.parse_args()
 a= getTomlFile(args.path)
 for i in a:
-  preferenceIndex(i)
+  print(preferenceIndex(i))
   activity(i)
 plot(a)

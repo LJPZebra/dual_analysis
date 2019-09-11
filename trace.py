@@ -43,6 +43,7 @@ def trace(experiment):
       if not j.size == 0:
         axs[i].plot(time[j], position[j], '-.')
         axs[i].set_xlim(time[j][0], time[j][-1])
+        axs[i].set_ylim(-200, 1200)
 
     axs[0].set_title("Concentration: " + str(experiment["experiment"]["concentration"]) + str(experiment["info"]["path"]) + str(key)[-1] )
 
