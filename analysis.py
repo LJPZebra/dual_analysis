@@ -1,4 +1,5 @@
 import toml
+import os
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
@@ -111,7 +112,7 @@ def preferenceIndex(experiment):
   return pref
 
 
-def plot(experiments):
+def plot(experiments, savePath):
 
   concentrations = []
   products = []
@@ -186,7 +187,7 @@ def plot(experiments):
   piActivityBuf2 = [np.asarray(i) for i in piActivityBuf2]
   piActivityBuf2 = [i[~np.isnan(i)] for i in piActivityBuf2]
 
-  fig, axs = plt.subplots(4, 1, sharex=True, sharey=True)
+  fig, axs = plt.subplots(4, 1, sharex=True, sharey=True, figsize=(11.69, 8.27))
   boxWidthCompensation = lambda p, w: 10**(np.log10(p)+w/2.)-10**(np.log10(p)-w/2.)
   widths = [boxWidthCompensation(p, 0.05) for p in concentrations]
 
@@ -218,12 +219,18 @@ def plot(experiments):
     i.grid(b=True)
 
   axs[0].set_ylim(-1.2, 1.2)
-  axs[0].set_title("ATP")
+  axs[0].set_xlim(0, concentrations[-1] + widths[-1]*1.5)
   axs[1].set_ylabel("Product Cycle #1")
   axs[0].set_ylabel("Buffer Cycle #1")
   axs[3].set_ylabel("Product Cycle #2")
   axs[2].set_ylabel("Buffer Cycle #2")
 
+  if savePath:
+    path = os.path.abspath(savePath) + "/"
+    if not os.path.exists(path):
+          os.makedirs(path)
+
+  plt.savefig(path + "/" + "preferenceIndex.svg")
 
   fig, axs = plt.subplots(4, 1, sharex=True, sharey=True)
   for i, j in enumerate(piActivityProd1):
@@ -257,7 +264,7 @@ def plot(experiments):
     i.grid(b=True)
 
 
-  fig, axs = plt.subplots(4, 1, sharex=True, sharey=True)
+  '''fig, axs = plt.subplots(4, 1, sharex=True, sharey=True)
   for i in range(4):
     axs[i].errorbar(concentrations, [np.mean(distBuff[i][j]) for j in range(len(concentrations))], yerr=[np.std(distBuff[i][j]) for j in range(len(concentrations))], label="Buffer")
     axs[i].errorbar(concentrations, [np.mean(distProd[i][j]) for j in range(len(concentrations))], yerr=[np.std(distProd[i][j]) for j in range(len(concentrations))], label="Product")
@@ -273,7 +280,8 @@ def plot(experiments):
         c.append(exp["experiment"]["concentration"])
         p.append(n[1])
         a.append(exp["fish"]["age"])
-  ax.scatter(c, p, a)
+  ax.scatter(c, p, a)'''
+
 
 
 
@@ -281,10 +289,11 @@ def plot(experiments):
 
 parser = argparse.ArgumentParser(description="Compute the preference index from a list of toml files")
 parser.add_argument("path", nargs='+', help="List of path")
+parser.add_argument("--write", dest="write", help="Path to a folder where to write the output")
 
 args = parser.parse_args()
 a= getTomlFile(args.path)
 for i in a:
   print(preferenceIndex(i))
   activity(i)
-plot(a)
+plot(a, args.write)

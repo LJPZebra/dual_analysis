@@ -1,4 +1,5 @@
 import toml
+import os
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
@@ -20,7 +21,7 @@ def cycle(experiment, fish):
     return protocol
 
 
-def trace(experiment):
+def trace(experiment, savePath):
 
 # Get the starting time and the absolute time of the experiment
   indexRef = experiment["metadata"]["image"].index(0)
@@ -41,7 +42,7 @@ def trace(experiment):
     fig, axs = plt.subplots(4, 1, sharey=True)
     for i, j in enumerate(protocol):
       if not j.size == 0:
-        axs[i].plot(time[j], position[j], '-.')
+        axs[i].plot(time[j], position[j])
         axs[i].set_xlim(time[j][0], time[j][-1])
         axs[i].set_ylim(-200, 1200)
 
@@ -64,13 +65,21 @@ def trace(experiment):
       raise ValueError("Experiment order is empty.")
 
 
+    if savePath:
+      path = os.path.abspath(savePath) + "/" + str(experiment["experiment"]["product"]) + "/" + str(experiment["experiment"]["concentration"]) + "/"
+      if not os.path.exists(path):
+            os.makedirs(path)
+    plt.savefig(path + str(experiment["info"]["title"]) + str(key)[-1] + ".svg")
+
+
 
 parser = argparse.ArgumentParser(description="Plot the trace from a list of toml files")
 parser.add_argument("path", nargs='+', help="List of path")
+parser.add_argument("--write", dest="write", help="Path to a folder where to write the output")
 
 args = parser.parse_args()
 a = getTomlFile(args.path)
 for i in a:
-  trace(i)
+  trace(i, args.write)
 
 plt.show()
