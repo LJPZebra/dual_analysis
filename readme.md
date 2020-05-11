@@ -1,6 +1,6 @@
 # Dual analysis CLI
 
-Dual command line interface is made to standardize (across version and user) the analysis of experiment perform on Dual.
+Dual command line interface is made to standardize (across version and user) the analysis of experiments perform on Dual.
 
 ## Folder architecture description
 
@@ -46,18 +46,23 @@ time = [ ]
 */All the tracking result/*
 ```
 
+### Activate the virtual environment
+```
+source bin/activate
+```
+
 ### Extract timestamps (old dual version)
 
 In the old version of the Dual control software, the Timestamps.txt was not generated but embedded in the frame. To extract the metadata and create the Timestamps.txt used the CLI command:
 ```
-python extractTimestamp.py path_to_the_raw_folder 
+python3 extractTimestamp.py path_to_the_raw_folder 
 ```
 
 ### Generate the toml file
 
 Use the cli command:
 ```
-python createToml.py path_to_the_raw_folder --name outputName -o dest
+python3 createToml.py path_to_the_raw_folder --name outputName -o dest
 ```
 
 > For each experiment, for product start image is manually set to account for a possible delay due to air in the syringe or variable transitory phase.
@@ -65,7 +70,7 @@ python createToml.py path_to_the_raw_folder --name outputName -o dest
 ### Update the toml file with new tracking data
 Use the cli command:
 ```
-python updateToml.py path_to_the_raw_folder -o dest
+python3 updateToml.py path_to_the_raw_folder -o dest
 ```
 
 
@@ -73,11 +78,11 @@ python updateToml.py path_to_the_raw_folder -o dest
 
 Use the cli command:
 ```
-python listPath.py root | xargs python3 createToml.py -o dest --erase True
+python3 listPath.py root | xargs python3 createToml.py -o dest --erase True
 ```
 And,
 ```
-python listPath.py root | xargs python3 extractTimestamp.py
+python3 listPath.py root | xargs python3 extractTimestamp.py
 ```
 
 
@@ -100,16 +105,16 @@ The analysis workflow can change for the version of Dual used to performed the e
 
 If you want to extract only the toml file that correspond to some criterions
 ```
-python list.py files.toml --product products --concentration concentrations --age
+python3 list.py files.toml --product products --concentration concentrations --age min max
 ```
 And for  the analysis:
 ```
-python list.py files.toml --product products --concentration concentrations --age | xargs python analysis.py
+python3 list.py files.toml --product products --concentration concentrations --age | xargs python analysis.py
 ```
 
 If you want to plot the trajectory for one or several fish
 ```
-python list.py files.toml --product products --concentration concentrations --age | xargs python trace.py
+python3 list.py files.toml --product products --concentration concentrations --age | xargs python trace.py
 ```
 
 ## Analysis

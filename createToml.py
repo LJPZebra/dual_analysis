@@ -6,8 +6,10 @@ import os
 import datetime
 
 def createToml(path="", fileName=None, dest ="", erase=None):
+    """
+    Create the toml file from a list of path
+    """
 
-    print(erase)
     folders = os.path.abspath(path).split(os.sep)
     
     if not fileName:
@@ -27,7 +29,7 @@ def createToml(path="", fileName=None, dest ="", erase=None):
 
     info = { "title" : fileName, "path" : path, "author" : "Benjamin Gallois" }
     fish = { "age" : int(parameters[1][1]), "date" : datetime.datetime.strptime(parameters[1][0], "%Y-%m-%d"),  "type" : "wt", "remark" : ""}
-    experiment = {"date" : datetime.datetime.strptime(folders[-2], "%Y-%m-%d"), "product" : parameters[1][2].lower(), "concentration" : float("".join([i for i in parameters[1][3] if i.isdigit()])), "interface" : "", "order" : "", "buffer1" : [int(milestones[0][1]), int(milestones[0][2])], "buffer2" : [int(milestones[0][5]), int(milestones[0][6])], "product1" : [int(milestones[0][3]), int(milestones[0][4])], "product2" : [int(milestones[0][7]), int(timestamps[0].tail(1))]}
+    experiment = {"date" : datetime.datetime.strptime(folders[-2], "%Y-%m-%d"), "product" : parameters[1][2].lower(), "concentration" : float(parameters[1][3]), "interface" : "500", "order" : "BRBL", "buffer1" : [int(milestones[0][1]), int(milestones[0][2])], "buffer2" : [int(milestones[0][5]), int(milestones[0][6])], "product1" : [int(milestones[0][3]), int(milestones[0][4])], "product2" : [int(milestones[0][7]), int(timestamps[0].tail(1))]}
     metadata = { "image" : timestamps[0], "time" : timestamps[1] }
 
     tracking = {}
@@ -51,8 +53,8 @@ def createToml(path="", fileName=None, dest ="", erase=None):
             toml.dump(dic, f)
 
 
-parser = argparse.ArgumentParser(description="Create a toml file that contains all the information about the experiment")
-parser.add_argument("path", nargs='+', help="Path to the folder of the experiment")
+parser = argparse.ArgumentParser(description="Create a toml file that contains all the information about an experiment")
+parser.add_argument("path", nargs='+', help="Path to the folder of the experiments")
 parser.add_argument("--name", dest="name", help="Name of the output toml file")
 parser.add_argument("-o", dest="dest", help="Path to a folder to store the toml file")
 parser.add_argument("--erase", dest="erase", help="Erase the toml file")
@@ -60,5 +62,9 @@ parser.add_argument("--erase", dest="erase", help="Erase the toml file")
 args = parser.parse_args()
 for i in args.path:
   if i:
-    createToml(i, args.name, args.dest, args.erase)
+    try:
+      createToml(i, args.name, args.dest, args.erase)
+    except Exception as e:
+      print("Failed " + i)
+      print(e)
 print("Done")
