@@ -30,23 +30,30 @@ def minMax(path, n):
         tmp = cv2.imread(imageList[i], flags=cv2.IMREAD_GRAYSCALE)
         maxImage = cv2.max(tmp, maxImage)
 
-        if not tracking["xBody"][tracking.imageNumber == i].empty:
-          dat = (int(tracking["xBody"][tracking.imageNumber == i]), int(tracking["yBody"][tracking.imageNumber == i]))
-          y = np.array((dat[1] - 200, dat[1] + 200))
-          y = y.clip(0, image.shape[0])
-          x = np.array((dat[0] - 200, dat[0] + 200))
-          x = x.clip(0, image.shape[1])
-          sub = tmp[y[0]:y[1], x[0]:x[1]]
-          tmp[y[0]:y[1], x[0]:x[1]] = np.ones(sub.shape)*255
+
+        if not tracking[tracking.imageNumber == i].empty:
+          for row in tracking[tracking.imageNumber == i].itertuples():
+            dat = (int(row.xBody), int(row.yBody))
+            size = 200
+            y = np.array((dat[1] - size, dat[1] + size))
+            y = y.clip(0, image.shape[0])
+            x = np.array((dat[0] - size, dat[0] + size))
+            x = x.clip(0, image.shape[1])
+            sub = tmp[y[0]:y[1], x[0]:x[1]]
+            tmp[y[0]:y[1], x[0]:x[1]] = np.ones(sub.shape)*255
+            #cv2.imwrite(path + "tmp.pgm", tmp)
           minImage = cv2.min(tmp, minImage)
 
-        
-    minCrop = minImage[50:450, 10:990]
-    __, bina = cv2.threshold(minCrop, 90, 1, cv2.THRESH_BINARY_INV)
-    kernel = np.ones((9,9), np.uint8) 
-    bina = cv2.dilate(bina, kernel, iterations=1) 
-    minCrop = cv2.inpaint(minCrop, bina, 3, cv2.INPAINT_NS)
-    minImage[50:450, 10:990] = minCrop
+    param = pandas.read_csv(path + "/Tracking_Result/parameter.param", sep = ' = ', header = None)
+    roi = [int(param[param[0] == "ROI top x"][1].values), int(param[param[0] == "ROI top y"][1].values), int(param[param[0] == "ROI bottom x"][1].values), int(param[param[0] == "ROI bottom y"][1].values)]
+    kernel = np.ones((11, 11), np.uint8) 
+    tmp = minImage-maxImage
+    tmp = tmp[roi[1]:roi[3], roi[0]:roi[2]]
+
+    __, dst = cv2.threshold(tmp, 200, 255, cv2.THRESH_BINARY_INV)
+    dst = cv2.morphologyEx(dst, cv2.MORPH_DILATE, kernel, iterations=3) 
+    minImage[roi[1]:roi[3], roi[0]:roi[2]] = cv2.inpaint(minImage[roi[1]:roi[3], roi[0]:roi[2]], dst, 100, cv2.INPAINT_NS)
+
 
     cv2.imwrite(path + "/maxProjection.pgm", maxImage)
     cv2.imwrite(path + "/minProjection.pgm", minImage)
@@ -57,10 +64,10 @@ parser.add_argument("path", nargs='+', help="Path to the folder of the experimen
 parser.add_argument("-n", dest="number", help="One on n images taken")
 args = parser.parse_args()
 for i in args.path:
-  try:
-    minMax(i, int(args.number))
-    print("Done " + i)
-  except Exception as e:
-    print("Error for " + str(i), e)
-    pass
+  #try:
+  minMax(i, int(args.number))
+    #print("Done " + i)
+  #except Exception as e:
+   # print("Error for " + str(i), e)
+    #pass
 

@@ -18,70 +18,75 @@ import shutil
 
    It can take directly a list of path to the image sequences.
 
-   The tool will create a folder control alongside the images where the two sides, the fish and the minimal
-   distance between the fish and the interface will be displayed.
+   The tool will create a folder named control alongside the image sequences.
+  The fish and the minimal distance between the fish and the interface will be displayed.
 
 '''
 
 
 
 
-def extractInterface(image, minImage, maxImage, distances, interfaces, objects, dat, datHead, param):
-    try:
-      roi = [10, 50, image.shape[1] - 10, image.shape[0] - 50]
+def extractInterface(image, minImage, maxImage, data, param):
 
-#Normalization
+      # Match tracking ROI, need FastTRack version > 4
+      try:
+        roi = [int(param[param[0] == "ROI top x"][1].values), int(param[param[0] == "ROI top y"][1].values), int(param[param[0] == "ROI bottom x"][1].values), int(param[param[0] == "ROI bottom y"][1].values)]
+
+      except:
+        roi = [5, 50, image.shape[1] - 10, image.shape[0] - 50]
+
+
+      # Normalization by min and max projection
       sub = np.copy(image)
-      paintCrop = np.copy(sub[roi[1]:roi[3], roi[0]:roi[2]])
-      __, binaPaint = cv2.threshold(paintCrop, 90, 1, cv2.THRESH_BINARY_INV)
-      kernel = np.ones((11, 11), np.uint8) 
-      binaPaint = cv2.dilate(binaPaint, kernel, iterations=2) 
-      paintCrop = cv2.inpaint(paintCrop, binaPaint, 15, cv2.INPAINT_NS)
-      sub[roi[1]:roi[3], roi[0]:roi[2]] = paintCrop
-
       sub = ( np.float32(image) - np.float32(minImage) ) / (np.float32(maxImage) - np.float32(minImage))
       sub = sub.clip(0, 1) 
       sub *= 255
       sub = np.uint8(sub)
       sub = sub[roi[1]:roi[3], roi[0]:roi[2]]
+      base = np.copy(sub)
       image = image[roi[1]:roi[3], roi[0]:roi[2]]
       
       
-      # Fish inpainting
-      y = np.array((dat[1] - roi[1]  - 100, dat[1] - roi[1] + 100))
-      y = y.clip(0, sub.shape[0])
-      x = np.array((dat[0] - 100 - roi[0], dat[0] - roi[0] + 100))
-      x = x.clip(0, sub.shape[1])
-      fish = np.copy(image[y[0]:y[1], x[0]:x[1]])
-      #fishNorma = np.copy(sub[y[0]:y[1], x[0]:x[1]])
-      #__, bina = cv2.threshold(fish, 90, 1, cv2.THRESH_BINARY_INV)
-      #kernel = np.ones((9,9), np.uint8) 
-      #bina = cv2.dilate(bina, kernel, iterations=1) 
-      #fishInpaint = cv2.inpaint(fishNorma, bina, 25, cv2.INPAINT_NS)
-      #sub[y[0]:y[1], x[0]:x[1]] = fishInpaint
+      # Fish detection: Select the tracking data corresponding with the current image.
+      # Select a sub image containing only the fish and extract the contour.
+      # Append the contour and the associated id in the object stack.
+      obj = []
+      for row in data.itertuples():
+        # Take a sub image containing each fish
+        y = np.array((row.yBody - roi[1]  - 150, row.yBody - roi[1] + 150))
+        yOffset = 0
+        if y[0] < 0:
+          yOffset -= int(y[0])
+        y = y.clip(0, sub.shape[0])
+        x = np.array((row.xBody - roi[0] - 150, row.xBody - roi[0] + 150))
+        xOffset = 0
+        if x[0] < 0:
+          xOffset -= int(x[0])
+        x = x.clip(0, sub.shape[1])
+        fish = image[int(y[0]):int(y[1]), int(x[0]):int(x[1])] - maxImage[int(y[0]):int(y[1]), int(x[0]):int(x[1])]
+        __, bina = cv2.threshold(fish, 190, 255, cv2.THRESH_BINARY_INV)
+        cnts, __ = cv2.findContours(bina, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        fishCnt = [i for i in cnts if (cv2.contourArea(i)>15 and cv2.contourArea(i)<350)]
+        fishCnt = sorted(fishCnt, key=lambda x: cv2.contourArea(x))
+        if len(fishCnt) > 0:
+          # Check which contour is the fish
+          for i, j in enumerate(fishCnt):
+            if cv2.pointPolygonTest(j, (150 - xOffset, 150 - yOffset), measureDist=False) == 1:
+              obj.append((row.id, j))
+              break
 
-      '''paintCrop = sub[50:450, 10:990]
-      __, binaPaint = cv2.threshold(paintCrop, 20, 1, cv2.THRESH_BINARY_INV)
-      kernel = np.ones((9,9), np.uint8) 
-      binaPaint = cv2.dilate(binaPaint, kernel, iterations=1) 
-      paintCrop = cv2.inpaint(paintCrop, binaPaint, 7, cv2.INPAINT_NS)
-      sub[50:450, 10:990] = paintCrop'''
-      
-      # Fish detection
-      __, bina = cv2.threshold(fish, 90, 1, cv2.THRESH_BINARY_INV)
-      cnts, __ = cv2.findContours(bina, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-      fishCnt = sorted(cnts, key=lambda x: cv2.contourArea(x), reverse=True)[0]
 
       # Interface detection
       kernel = np.ones((9, 9), np.uint8) 
-      dst = cv2.morphologyEx(sub, cv2.MORPH_DILATE, kernel, iterations=2) 
+      dst = cv2.morphologyEx(sub, cv2.MORPH_DILATE, kernel, iterations=1) 
       __, dst = cv2.threshold(dst, 0, 1, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
       dst = cv2.morphologyEx(dst, cv2.MORPH_CLOSE, kernel, iterations=4) 
       dst = cv2.morphologyEx(dst, cv2.MORPH_OPEN, kernel, iterations=4) 
       cnts, __ = cv2.findContours(dst, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
       cnts = sorted(cnts, key=lambda x: cv2.contourArea(x), reverse=True)
+      #base = np.copy(dst)
       
-      # Interface cleaning
+      # Interface cleaning, remove horizontal edges.
       for i, j in enumerate(cnts[0]):
           if j[0][0] < 200:
               if j[0][1] <= 200:
@@ -100,44 +105,44 @@ def extractInterface(image, minImage, maxImage, distances, interfaces, objects, 
 
           if j[0][1] < 5: 
                   j[0][1] = -5000
-          if j[0][1] > sub.shape[0] - 5:
+          if j[0][1] > roi[3] - roi[1] - 5:
                   j[0][1] = 5000
       
+
+      # Convert cv2 contours to shapely objects
       interfaceShape = []
       for i in cnts[0]:
           if abs(i[0][0]) < 2000 and abs(i[0][1]) < 2000:
               interfaceShape.append((i[0][0], i[0][1]))
       interfaceShape = np.asarray(interfaceShape)
-
       
-      fishShape = []
-      for i in fishCnt:
-              fishShape.append((i[0][0] + x[0], i[0][1] + y[0]))
-      fishShape = np.asarray(fishShape)
+      objectShapes = []
+      for o in obj:
+        fishShape = []
+        tmpData = data[data.id == o[0]]
+        x = np.array((int(tmpData.xBody) - roi[0] - 150, int(tmpData.xBody) - roi[0] + 150))
+        y = np.array((int(tmpData.yBody) - roi[1] - 150, int(tmpData.yBody) - roi[1] + 150))
+        y = y.clip(0, sub.shape[0])
+        x = x.clip(0, sub.shape[1])
+        for i in o[1]:
+            fishShape.append((i[0][0] + x[0], i[0][1] + y[0]))
+        fishShape = np.asarray(fishShape)
+        objectShapes.append((o[0], fishShape))
 
-#Minimal distance
-      if fishShape.size != 0 and interfaceShape.size != 0:
-          fishLine = geom.LineString(fishShape)
-          interfaceLine = geom.LineString(interfaceShape)
-          dist =  fishLine.distance(interfaceLine)
-          nep = nearest_points(fishLine, interfaceLine)
-          if nep[0].x < nep[1].x:
-              dist*=-1
-          distances.append(dist)
-          interfaces.append(interfaceShape)
-          objects.append(fishShape)
-      else:
-          distances.append(np.nan)
-          interfaces.append(np.array((np.nan)))
-          objects.append(np.array((np.nan)))
-      return dst
-    except Exception as e:
-      print(e)
-      distances.append(np.nan)
-      interfaces.append(np.array((np.nan)))
-      objects.append(np.array((np.nan)))
 
-      return image
+      #Compute the minimal distance between the fish contour and the interface
+      distances = []
+      for i, j in objectShapes:
+        if j.size > 2 and interfaceShape.size > 2:
+            fishLine = geom.LineString(j)
+            interfaceLine = geom.LineString(interfaceShape)
+            dist =  fishLine.distance(interfaceLine)
+            nep = nearest_points(fishLine, interfaceLine)
+            if nep[0].x < nep[1].x:
+                dist*=-1
+            distances.append((i, dist))
+
+      return base, distances, interfaceShape, objectShapes
 
 
 
@@ -163,7 +168,7 @@ def extractDist(path):
   secondCycle =(meta[0][7] + 2000, len(images))
 
   with open(path + "/distance.txt", "w") as outFile:
-    outFile.write("imageNumber" + '\t' + "distance" + '\n')
+    outFile.write("imageNumber" + '\t' + "distance"  + '\t' + "id" + '\n')
     try :
       shutil.rmtree(path + "/control/")
       os.mkdir(path + "/control/")
@@ -172,49 +177,45 @@ def extractDist(path):
 
     plt.figure()
     for i, j in tqdm(enumerate(images), ascii=True, total=len(images)):
-        if not tracking["xBody"][tracking.imageNumber == i].empty:
-            dat = (int(tracking["xBody"][tracking.imageNumber == i]), int(tracking["yBody"][tracking.imageNumber == i]))
-            datHead = (int(tracking["xHead"][tracking.imageNumber == i]), int(tracking["yHead"][tracking.imageNumber == i]), int(tracking["tHead"][tracking.imageNumber == i]))
+        if not tracking[tracking.imageNumber == i].empty:
+            dat = tracking[tracking.imageNumber == i]
             if i in range(firstCycle[0], firstCycle[1]):
-                img = extractInterface(cv2.imread(j, flags=cv2.IMREAD_GRAYSCALE), minImage, maxImage, distances, interfaces, fish, dat, datHead, param)
-                if not np.isnan(distances[-1]):
-                  plt.imshow(img)
-                  plt.plot(*interfaces[-1].T, "r")
-                  plt.plot(*fish[-1].T)
-                  line0 = geom.LineString(interfaces[-1])
-                  line1 = geom.LineString(fish[-1])
-                  nep = nearest_points(line0, line1)
-                  plt.plot([nep[0].x, nep[1].x], [nep[0].y, nep[1].y], color='red', marker='o', scalex=False, scaley=False)
-                  plt.xlim(0,1000)
-                  plt.ylim(400,0)
-                  plt.title(str(distances[-1]))
-                  plt.savefig(path + "/control/" + str(i) + ".png", dpi=100)
-                  plt.clf()
-            elif i in range(secondCycle[0], secondCycle[1]):
-                img = extractInterface(cv2.imread(j, flags=cv2.IMREAD_GRAYSCALE), minImage, maxImage, distances, interfaces, fish, dat, datHead, param)
-                if not np.isnan(distances[-1]):
-                  plt.imshow(img)
-                  plt.plot(*interfaces[-1].T)
-                  plt.plot(*fish[-1].T)
-                  line0 = geom.LineString(interfaces[-1])
-                  line1 = geom.LineString(fish[-1])
-                  nep = nearest_points(line0, line1)
-                  plt.plot([nep[0].x, nep[1].x], [nep[0].y, nep[1].y], color='red', marker='o', scalex=False, scaley=False)
-                  plt.xlim(0,1000)
-                  plt.ylim(400,0)
-                  plt.title(str(distances[-1]))
-                  plt.savefig(path + "/control/" + str(i) + ".png", dpi=100)
-                  plt.clf()
-            else:
-                distances.append(np.nan)
-                interfaces.append(np.array((np.nan)))
-                fish.append(np.array((np.nan)))
-        else:
-            distances.append(np.nan)
-            interfaces.append(np.array((np.nan)))
-            fish.append(np.array((np.nan)))
+                img, distances, interfaces, objects = extractInterface(cv2.imread(j, flags=cv2.IMREAD_GRAYSCALE), minImage, maxImage, dat, param)
+                for k, l in distances:
+                  outFile.write(str(i) + '\t' + str(l) + '\t' + str(k) + '\n')
 
-        outFile.write(str(i) + '\t' + str(distances[-1]) + '\n')
+                for d, di in zip(objects, distances):
+                  if interfaces.size > 2 and d[1].size > 2:
+                    plt.imshow(img)
+                    plt.plot(*interfaces.T, "r")
+                    plt.plot(*d[1].T)
+                    line0 = geom.LineString(interfaces)
+                    line1 = geom.LineString(d[1])
+                    nep = nearest_points(line0, line1)
+                    plt.plot([nep[0].x, nep[1].x], [nep[0].y, nep[1].y], color='red', marker='o', scalex=False, scaley=False)
+                    #plt.xlim(0,1000)
+                    #plt.ylim(500,0)
+                plt.savefig(path + "/control/" + str(i) + ".png", dpi=100)
+                plt.clf()
+            elif i in range(secondCycle[0], secondCycle[1]):
+                img, distances, interfaces, objects = extractInterface(cv2.imread(j, flags=cv2.IMREAD_GRAYSCALE), minImage, maxImage, dat, param)
+                for k, l in distances:
+                  outFile.write(str(i) + '\t' + str(l) + '\t' + str(k) + '\n')
+
+                for d, di in zip(objects, distances):
+                  if interfaces.size > 2 and d[1].size > 2:
+                    plt.imshow(img)
+                    plt.plot(*interfaces.T, "r")
+                    plt.plot(*d[1].T)
+                    line0 = geom.LineString(interfaces)
+                    line1 = geom.LineString(d[1])
+                    nep = nearest_points(line0, line1)
+                    plt.plot([nep[0].x, nep[1].x], [nep[0].y, nep[1].y], color='red', marker='o', scalex=False, scaley=False)
+                    plt.xlim(0,1000)
+                    plt.ylim(500,0)
+                plt.savefig(path + "/control/" + str(i) + ".png", dpi=100)
+                plt.clf()
+
 
 
 success = []

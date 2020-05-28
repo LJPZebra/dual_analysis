@@ -22,7 +22,7 @@ def createDir(path):
 
 
     # Replace the timestamp with the image number
-    for i, j in enumerate(inputFile["imageNumber"]):
+    for i, j in enumerate(inputFile["imageNumber"].values):
       for k, l  in enumerate(timeStamp[1]):
         if str(j) == str(l):
           inputFile["imageNumber"][i] = timeStamp[0][k]
@@ -32,11 +32,11 @@ def createDir(path):
       for i, j in enumerate(inputFile["imageNumber"]):
         if str(j) == "#" + str(l):
           inputFile["imageNumber"][i] = milestones[0][k]
-          break
+          #break
 
     # Create the id column in the tracking.txt file
     idList = [0]
-    for i, j in enumerate(inputFile["imageNumber"]):
+    for i, j in enumerate(inputFile["imageNumber"].values):
       if i > 0:
         if inputFile["imageNumber"][i-1] != inputFile["imageNumber"][i]:
           idList.append(0)
@@ -49,15 +49,15 @@ def createDir(path):
     inputFile.reset_index(inplace=True)
     dropList = []
     meanLen = np.mean(inputFile.lenght) + 100
-    for i in range(np.max(inputFile.imageNumber.index.values)):
+    maxId = np.max(inputFile.id.values)
+    for i, __ in enumerate(inputFile.imageNumber.values):
+      if i < len(inputFile.imageNumber.values) - maxId - 1:
+        if inputFile.iloc[i].xHead == inputFile.iloc[i+maxId+1].xHead and inputFile.iloc[i].yBody == inputFile.iloc[i+maxId+1].yBody:
+          dropList.append(i+maxId+1)
+    #  if int(inputFile.lenght.iloc[i]) > meanLen + 100 or int(inputFile.lenght.iloc[i]) < 50:
+     #   dropList.append(i)
 
-      if i < np.max(inputFile.imageNumber.index.values) - 1:
-        if inputFile.iloc[i].xHead == inputFile.iloc[i+1].xHead and inputFile.iloc[i].yBody == inputFile.iloc[i+1].yBody:
-          dropList.append(i+1)
-      if int(inputFile.lenght.iloc[i]) > meanLen + 100 or int(inputFile.lenght.iloc[i]) < 50:
-        dropList.append(i)
-
-    inputFile.drop(dropList, axis=0, inplace=True)
+    #inputFile.drop(dropList, axis=0, inplace=True)
 
     inputFile.to_csv(path + "/Tracking_Result/tracking.txt", sep="\t", index=None)
 
