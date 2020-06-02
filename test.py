@@ -11,6 +11,7 @@ metadata = { "image" : range(40000), "time" : np.linspace(10, 11, 40000).tolist(
 
 
 position = (np.random.rand(40000)*600).tolist()
+#position = [0]*20000 + [900]*20000
 position2 = [j for i, j in enumerate(position) if i%2 ==0]
 trackingData = { "xHead" : position, "yHead" : position, "imageNumber" : range(40000) }
 trackingData2 = { "xHead" : position2, "yHead" : position2, "imageNumber" : range(0, 40000, 2) }

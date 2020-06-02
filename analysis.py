@@ -3,6 +3,7 @@ import os
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 def getTomlFile(pathList):
   files = []
@@ -55,7 +56,7 @@ def preferenceIndex(experiment):
 
 # For each fish in an experiment
   pref = []
-  dist = []
+  xDist = []
   if(len(experiment["tracking"]) != 1 ): print("Multiple fish detected")
   for key in experiment["tracking"]:
 
@@ -69,46 +70,37 @@ def preferenceIndex(experiment):
 
     dtimeFish = np.insert(dtimeFish, 0, 0)
     position = np.array(experiment["tracking"][key]["xHead"])
-    interfacePosition = int(experiment["experiment"]["interface"])
+    interfacePosition = float(experiment["experiment"]["interface"])
 
     protocol = cycle(experiment, key)
 
-
     preferenceIndex = []
-    timeDistribution = []
     for i, j in enumerate(protocol):
       if len(j) != 0 :
-        left = np.float64(np.sum(dtimeFish[j][np.intersect1d(np.where(position[j] < interfacePosition)[0], np.where(dtimeFish[j] < 100*606242360740151))]))
-        right = np.float64(np.sum(dtimeFish[j][np.intersect1d(np.where(position[j] > interfacePosition)[0], np.where(dtimeFish[j] < 606242360740151*100))]))
+        left = np.float64(np.sum(dtimeFish[j][np.intersect1d(np.where(position[j] < interfacePosition)[0], np.where(dtimeFish[j] < 5*60707805))]))
+        right = np.float64(np.sum(dtimeFish[j][np.intersect1d(np.where(position[j] > interfacePosition)[0], np.where(dtimeFish[j] < 5*60707805))]))
         preferenceIndex.append( (left - right) / (left + right) )
-        timeDistribution.append( (left, right) )
       else:
         preferenceIndex.append( np.nan )
-        timeDistribution.append( (np.nan, np.nan) )
       if len(j) < 10: 
         print("Warning low stat" + experiment["info"]["path"] + str(len(experiment["tracking"])))
         #preferenceIndex[-1] =  np.nan
 
-      
     order  = experiment["experiment"]["order"]
     if order == "BLBR":
       preferenceIndex[3] = - preferenceIndex[3]
       preferenceIndex[2] = - preferenceIndex[2]
-      timeDistribution[0] = timeDistribution[0][::-1]
-      timeDistribution[1] = timeDistribution[1][::-1]
     elif order == "BRBL":
       preferenceIndex[0] = - preferenceIndex[0]
       preferenceIndex[1] = - preferenceIndex[1]
-      timeDistribution[3] = timeDistribution[3][::-1]
-      timeDistribution[2] = timeDistribution[2][::-1]
     else:
       raise ValueError("Experiment order is empty.")
 
     pref.append(preferenceIndex)
-    dist.append(timeDistribution)
+    xDist.append(position[protocol[0]])
 
   experiment["experiment"]["preference index"] = pref
-  experiment["experiment"]["time distribution"] = dist
+  experiment["experiment"]["x dist"] = xDist
   return pref
 
 
@@ -122,6 +114,7 @@ def plot(experiments, savePath):
   concentrations = list(set(concentrations))
   concentrations.sort()
   products = list(set(products))
+  print(concentrations)
 
   piConcentrationBuf1 = [ [] for _ in range(len(concentrations))]
   piConcentrationProd1 = [ [] for _ in range(len(concentrations))]
@@ -135,6 +128,9 @@ def plot(experiments, savePath):
 
   distProd = [ [ [] for _ in range(len(concentrations))],  [ [] for _ in range(len(concentrations))], [ [] for _ in range(len(concentrations))], [ [] for _ in range(len(concentrations))] ]
   distBuff = [ [ [] for _ in range(len(concentrations))],  [ [] for _ in range(len(concentrations))], [ [] for _ in range(len(concentrations))], [ [] for _ in range(len(concentrations))] ]
+
+  xDist = []
+  xDistDual = [ [], [], [], [] ]
 
 
 
@@ -153,12 +149,11 @@ def plot(experiments, savePath):
             piActivityBuf1[k].append(n[0])
             piActivityBuf2[k].append(n[2])
 
-          for m, n in enumerate(exp["experiment"]["time distribution"]):
-            for i in range(4):
-              if not np.isnan(n[i][0]): 
-                distBuff[i][k].append(n[i][0])
-              if not np.isnan(n[i][1]): 
-                distProd[i][k].append(n[i][1])
+          for i in exp["experiment"]["x dist"]:
+            if i.size:
+              i -= np.min(i)
+              xDist.extend(i)
+              xDistDual[int(exp["info"]["path"][-5:-4]) - 1].extend(i)
 
   for i, _ in enumerate(concentrations):
     fig, ax = plt.subplots()
@@ -229,8 +224,44 @@ def plot(experiments, savePath):
     path = os.path.abspath(savePath) + "/"
     if not os.path.exists(path):
           os.makedirs(path)
+    plt.savefig(path + "/" + "preferenceIndex.svg")
 
-  plt.savefig(path + "/" + "preferenceIndex.svg")
+  fig, ax = plt.subplots()
+  meanProd = []
+  stdProd = []
+  for i, j in enumerate(concentrations):
+    tmp = np.concatenate((piConcentrationProd1[i], piConcentrationProd2[i]))
+    meanProd.append(float(np.mean(tmp)))
+    stdProd.append(float(np.std(tmp)))
+  output = {'mean': meanProd, 'std' : stdProd, 'concentration' : concentrations}
+  with open("/home/benjamin/Documents/preferenceIndexPlots/quinine_juvenil.toml", "w") as f:
+    f.write(toml.dumps(output))
+
+  fig, axs = plt.subplots(2, 1, sharex=True, sharey=True, figsize=(11.69, 8.27))
+  boxWidthCompensation = lambda p, w: 10**(np.log10(p)+w/2.)-10**(np.log10(p)-w/2.)
+  widths = [boxWidthCompensation(p, 0.05) for p in concentrations]
+
+  piBuffer =  []
+  piProd = []
+  for i, j in enumerate(concentrations):
+    piBuffer.append(np.concatenate((piConcentrationBuf1[i], piConcentrationBuf2[i])))
+    piProd.append(np.concatenate((piConcentrationProd1[i], piConcentrationProd2[i])))
+
+  for i, j in enumerate(piBuffer):
+    axs[0].scatter(np.ones(len(j))*(concentrations[i]), j, s=8)
+  axs[0].boxplot(piBuffer, positions=concentrations, widths= widths)
+  for i, j in enumerate(piProd):
+    axs[1].scatter(np.ones(len(j))*(concentrations[i]), j, s=8)
+  axs[1].boxplot(piProd, positions=concentrations, widths= widths)
+
+  axs[0].set_xscale("log")
+  for i in axs:
+    i.grid(b=True)
+
+  axs[0].set_ylim(-1.2, 1.2)
+  axs[0].set_xlim(0, concentrations[-1] + widths[-1]*1.5)
+  axs[1].set_ylabel("Product Cycle")
+  axs[0].set_ylabel("Buffer Cycle")
 
   fig, axs = plt.subplots(4, 1, sharex=True, sharey=True)
   for i, j in enumerate(piActivityProd1):
@@ -262,6 +293,16 @@ def plot(experiments, savePath):
   axs[0].set_xscale("log")
   for i in axs:
     i.grid(b=True)
+
+  plt.figure()
+  sns.distplot(np.array(xDist))
+
+  for j, i in enumerate(xDistDual):
+    if i:
+      plt.figure()
+      sns.distplot(np.array(i))
+      plt.title("Dual " + str(j + 1))
+  
 
 
   '''fig, axs = plt.subplots(4, 1, sharex=True, sharey=True)
