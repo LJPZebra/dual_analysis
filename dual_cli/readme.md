@@ -48,7 +48,7 @@ time = [ ]
 
 ### Activate the virtual environment
 ```
-source bin/activate
+source venv/bin/activate
 ```
 
 ### Extract timestamps (old dual version)
