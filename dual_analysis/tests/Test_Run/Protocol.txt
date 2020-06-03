@@ -1,0 +1,114 @@
+#
+# PROTOCOL: BUFFER - LEFT - BUFFER - RIGHT 
+#
+
+# --- Header ------------------------------------
+
+print:Starting protocol BLBR
+data:create directory
+camera:start
+
+# --- BUFFER CYCLE ------------------------------
+
+# --- Fill
+camera:comment:Filling (buffer cycle)
+switch:L:Buffer
+switch:R:Buffer
+switch:T:Trash
+wait:1000
+run:down:1250
+
+# --- Infuse
+wait:1000
+camera:comment:Infusing (buffer cycle)
+switch:L:Circuit
+switch:R:Circuit
+switch:T:Circuit
+wait:1000
+run:up:10000
+
+# --- LEFT CYCLE --------------------------------
+
+# --- Fill
+wait:1000
+camera:comment:Filling (left cycle)
+switch:L:Stimulus
+switch:R:Buffer
+switch:T:Trash
+wait:1000
+run:down:1250
+
+# --- Infuse
+wait:1000
+camera:comment:Infusing (left cycle)
+switch:L:Circuit
+switch:R:Circuit
+switch:T:Circuit
+wait:1000
+run:up:10000
+
+# --- BUFFER CYCLE ------------------------------
+
+# --- Fill
+wait:1000
+camera:comment:Filling (buffer cycle)
+switch:L:Buffer
+switch:R:Buffer
+switch:T:Trash
+wait:1000
+run:down:1250
+
+# --- Infuse
+wait:1000
+camera:comment:Infusing (buffer cycle)
+switch:L:Circuit
+switch:R:Circuit
+switch:T:Circuit
+wait:1000
+run:up:10000
+
+# --- RIGHT CYCLE --------------------------------
+
+# --- Fill
+wait:1000
+camera:comment:Filling (right cycle)
+switch:L:Buffer
+switch:R:Stimulus
+switch:T:Trash
+wait:1000
+run:down:1250
+
+# --- Infuse
+wait:1000
+camera:comment:Infusing (right cycle)
+switch:L:Circuit
+switch:R:Circuit
+switch:T:Circuit
+wait:1000
+run:up:10000
+
+# --- Footer ------------------------------------
+
+wait:1000
+camera:stop
+
+# --- Clean
+switch:L:Buffer
+switch:R:Buffer
+switch:T:Trash
+wait:1000
+
+run:down:1250:for:10000
+switch:L:Circuit
+switch:R:Circuit
+switch:T:Circuit
+wait:1000
+run:up:10000
+
+# --- Reset valves in default state
+wait:1000
+switch:L:Buffer
+switch:R:Buffer
+switch:T:Trash
+
+print:Protocol ended

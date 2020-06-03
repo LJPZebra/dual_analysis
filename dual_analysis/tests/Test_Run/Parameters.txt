@@ -1,0 +1,4 @@
+Spawning_date	2018-07-05
+Age	7
+Stimulus	acide citrique + colorant
+Concentration	0.02g/L + 0.5mL/L

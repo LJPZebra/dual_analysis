@@ -1,0 +1,21 @@
+name: Tests
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: test
+      run: |
+        source venv/bin/activate
+        cd dual_analysis
+        ../venv/bin/python3 -m pytest tests/tests.py
