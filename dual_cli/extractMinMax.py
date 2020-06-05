@@ -4,6 +4,7 @@ import cv2
 import glob
 import argparse
 import os
+import datetime
 from tqdm import tqdm
 
 
@@ -63,11 +64,21 @@ parser = argparse.ArgumentParser(description="Extract the maximal and minimal z-
 parser.add_argument("path", nargs='+', help="Path to the folder of the experiment")
 parser.add_argument("-n", dest="number", help="One on n images taken")
 args = parser.parse_args()
+success = []
+failure = []
+
 for i in args.path:
-  #try:
-  minMax(i, int(args.number))
-    #print("Done " + i)
-  #except Exception as e:
-   # print("Error for " + str(i), e)
-    #pass
+  try:
+     minMax(i, int(args.number))
+     success.append(i)
+  except Exception as e:
+     failure.append(i)
+
+name = datetime.datetime.now().strftime("%d%m%Y%H%M%S")
+with open(name + ".log", 'w') as f:
+  for i in success:
+    f.write(i + " Done\n")
+  for i in failure:
+    f.write(i + " Fail\n")
+
 

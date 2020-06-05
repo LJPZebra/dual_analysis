@@ -6,6 +6,7 @@ import glob
 import argparse
 import os
 import shapely
+import datetime
 import shapely.geometry as geom
 from shapely.ops import nearest_points
 from tqdm import tqdm
@@ -218,16 +219,21 @@ def extractDist(path):
 
 
 
-success = []
 parser = argparse.ArgumentParser(description="Extract the closest distance between interface and fish") 
 parser.add_argument("path", nargs='+', help="Path to the folder of the experiment")
 args = parser.parse_args()
+success = []
+failure = []
 for i in args.path:
   try:
-    extractDist(i)
-    print("Done " + i)
-    success.append(i)
+     extractDist(i)
+     success.append(i)
   except Exception as e:
-    print("Error for " + str(i), e)
-    
-print(success)
+     failure.append(i)
+
+name = datetime.datetime.now().strftime("%d%m%Y%H%M%S")
+with open(name + ".log", 'w') as f:
+  for i in success:
+    f.write(i + " Done\n")
+  for i in failure:
+    f.write(i + " Fail\n")
