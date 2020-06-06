@@ -166,8 +166,8 @@ def extractDist(path):
   interfaces = []
   distances = []
   fish = []
-  firstCycle = (meta[0][3] + 2000, meta[0][4])
-  secondCycle =(meta[0][7] + 2000, len(images))
+  firstCycle = (meta[0][3], meta[0][4])
+  secondCycle =(meta[0][7], len(images))
 
   with open(path + "/distance.txt", "w") as outFile:
     outFile.write("imageNumber" + '\t' + "distance"  + '\t' + "id" + '\n')
@@ -234,6 +234,7 @@ for i in args.path:
 
 name = datetime.datetime.now().strftime("%d%m%Y%H%M%S")
 with open(name + ".log", 'w') as f:
+  f.write(name + " extractDist\n")
   for i in success:
     f.write(i + " Done\n")
   for i in failure:
