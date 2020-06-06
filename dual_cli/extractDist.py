@@ -64,10 +64,11 @@ def extractInterface(image, minImage, maxImage, data, param):
         if x[0] < 0:
           xOffset -= int(x[0])
         x = x.clip(0, sub.shape[1])
-        fish = image[int(y[0]):int(y[1]), int(x[0]):int(x[1])] - maxImage[int(y[0]):int(y[1]), int(x[0]):int(x[1])]
+        fish = image[int(y[0]):int(y[1]), int(x[0]):int(x[1])] - maxImage[roi[1]:roi[3], roi[0]:roi[2]][int(y[0]):int(y[1]), int(x[0]):int(x[1])]
         __, bina = cv2.threshold(fish, 190, 255, cv2.THRESH_BINARY_INV)
+        #_, bina = cv2.threshold(fish, 0, 1, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
         cnts, __ = cv2.findContours(bina, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        fishCnt = [i for i in cnts if (cv2.contourArea(i)>15 and cv2.contourArea(i)<350)]
+        fishCnt = [i for i in cnts if (cv2.contourArea(i)>15 and cv2.contourArea(i)<(param[param[0] == "Maximal size"][1].values))]
         fishCnt = sorted(fishCnt, key=lambda x: cv2.contourArea(x))
         if len(fishCnt) > 0:
           # Check which contour is the fish
@@ -185,9 +186,9 @@ def extractDist(path):
                 for k, l in distances:
                   outFile.write(str(i) + '\t' + str(l) + '\t' + str(k) + '\n')
 
+                plt.imshow(img)
                 for d, di in zip(objects, distances):
                   if interfaces.size > 2 and d[1].size > 2:
-                    plt.imshow(img)
                     plt.plot(*interfaces.T, "r")
                     plt.plot(*d[1].T)
                     line0 = geom.LineString(interfaces)
@@ -203,17 +204,17 @@ def extractDist(path):
                 for k, l in distances:
                   outFile.write(str(i) + '\t' + str(l) + '\t' + str(k) + '\n')
 
+                plt.imshow(img)
                 for d, di in zip(objects, distances):
                   if interfaces.size > 2 and d[1].size > 2:
-                    plt.imshow(img)
                     plt.plot(*interfaces.T, "r")
                     plt.plot(*d[1].T)
                     line0 = geom.LineString(interfaces)
                     line1 = geom.LineString(d[1])
                     nep = nearest_points(line0, line1)
                     plt.plot([nep[0].x, nep[1].x], [nep[0].y, nep[1].y], color='red', marker='o', scalex=False, scaley=False)
-                    plt.xlim(0,1000)
-                    plt.ylim(500,0)
+                    #plt.xlim(0,1000)
+                    #plt.ylim(500,0)
                 plt.savefig(path + "/control/" + str(i) + ".png", dpi=100)
                 plt.clf()
 
