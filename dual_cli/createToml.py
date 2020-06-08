@@ -26,11 +26,21 @@ def createToml(path="", fileName=None, dest ="", erase=None):
     parameters = pandas.read_csv(path + "Parameters.txt", sep="\t", header=None)
     timestamps = pandas.read_csv(path + "Timestamps.txt", sep="\t", header=None)
     trackingData = pandas.read_csv(path + "Tracking_Result/tracking.txt", sep="\t")
+    distanceData = pandas.read_csv(path + "distance.txt", sep="\t")
 
     info = { "title" : fileName, "path" : path, "author" : "Benjamin Gallois" }
     fish = { "age" : int(parameters[1][1]), "date" : datetime.datetime.strptime(parameters[1][0], "%Y-%m-%d"),  "type" : "wt", "remark" : ""}
     experiment = {"date" : datetime.datetime.strptime(folders[-2], "%Y-%m-%d"), "product" : parameters[1][2].lower(), "concentration" : float(parameters[1][3]), "interface" : "500", "order" : "BRBL", "buffer1" : [int(milestones[0][1]), int(milestones[0][2])], "buffer2" : [int(milestones[0][5]), int(milestones[0][6])], "product1" : [int(milestones[0][3]), int(milestones[0][4])], "product2" : [int(milestones[0][7]), int(timestamps[0].tail(1))]}
     metadata = { "image" : timestamps[0], "time" : timestamps[1] }
+
+    tmp = np.zeros(len(trackingData.imageNumber.values))
+    for k, (i, j) in enumerate(zip(trackingData.imageNumber.values, trackingData.id.values)):
+        tmpDist = distanceData[(distanceData.imageNumber == i) & (distanceData.id == j)]
+        if not tmpDist.empty:
+            tmp[k] = (tmpDist.distance.values[0])
+        else:
+            tmp[k] = (np.nan)
+    trackingData["distance"] = tmp
 
     tracking = {}
     objectNumber = np.max(trackingData["id"]) + 1

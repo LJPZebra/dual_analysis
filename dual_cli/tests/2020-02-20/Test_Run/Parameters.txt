@@ -1,0 +1,4 @@
+Spawning_date	2018-07-05
+Age	7
+Stimulus	citricacide
+Concentration	0.02

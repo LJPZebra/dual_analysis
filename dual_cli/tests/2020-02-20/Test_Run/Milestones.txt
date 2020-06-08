@@ -1,0 +1,8 @@
+0	3779774764840208	Filling (buffer cycle)
+878	3779862485348916	Infusing (buffer cycle)
+7609	3780535565717894	Filling (left cycle)
+8486	3780623377285847	Infusing (left cycle)
+15215	3781296275529459	Filling (buffer cycle)
+16093	3781384056740639	Infusing (buffer cycle)
+22824	3782057167441771	Filling (right cycle)
+23702	3782144948662393	Infusing (right cycle)

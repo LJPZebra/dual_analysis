@@ -19,3 +19,5 @@ jobs:
         source venv/bin/activate
         cd dual_analysis
         ../venv/bin/python3 -m pytest tests/tests.py
+        cd ../dual_cli
+        ../venv/bin/python3 -m pytest tests/tests.py
