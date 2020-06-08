@@ -32,6 +32,10 @@ def extractInterface(image, minImage, maxImage, data, param):
       # Match tracking ROI, need FastTRack version > 4
       try:
         roi = [int(param[param[0] == "ROI top x"][1].values), int(param[param[0] == "ROI top y"][1].values), int(param[param[0] == "ROI bottom x"][1].values), int(param[param[0] == "ROI bottom y"][1].values)]
+        if roi[2] == 0:
+            roi[2] = minImage.shape[1]
+        if roi[3] == 0:
+            roi[3] = minImage.shape[0]
 
       except:
         roi = [5, 50, image.shape[1] - 10, image.shape[0] - 50]

@@ -42,11 +42,14 @@ def minMax(path, n):
             x = x.clip(0, image.shape[1])
             sub = tmp[y[0]:y[1], x[0]:x[1]]
             tmp[y[0]:y[1], x[0]:x[1]] = np.ones(sub.shape)*255
-            #cv2.imwrite(path + "tmp.pgm", tmp)
           minImage = cv2.min(tmp, minImage)
 
     param = pandas.read_csv(path + "/Tracking_Result/parameter.param", sep = ' = ', header = None)
     roi = [int(param[param[0] == "ROI top x"][1].values), int(param[param[0] == "ROI top y"][1].values), int(param[param[0] == "ROI bottom x"][1].values), int(param[param[0] == "ROI bottom y"][1].values)]
+    if roi[2] == 0:
+        roi[2] = minImage.shape[1]
+    if roi[3] == 0:
+        roi[3] = minImage.shape[0]
     kernel = np.ones((11, 11), np.uint8) 
     tmp = minImage-maxImage
     tmp = tmp[roi[1]:roi[3], roi[0]:roi[2]]
@@ -73,6 +76,7 @@ for i in args.path:
      success.append(i)
   except Exception as e:
      failure.append(i)
+     print(i, e)
 
 name = datetime.datetime.now().strftime("%d%m%Y%H%M%S")
 with open(name + ".log", 'w') as f:
