@@ -19,7 +19,7 @@ from tqdm import tqdm
 '''
 
 
-def minMax(path, n):
+def minMax(path, n, paint = True):
     imageList = glob.glob(path + "/Frame*pgm")
     tracking = pandas.read_csv(path + "/Tracking_Result/tracking.txt", sep='\t')
     imageList.sort()
@@ -50,13 +50,14 @@ def minMax(path, n):
         roi[2] = minImage.shape[1]
     if roi[3] == 0:
         roi[3] = minImage.shape[0]
-    kernel = np.ones((11, 11), np.uint8) 
-    tmp = minImage-maxImage
-    tmp = tmp[roi[1]:roi[3], roi[0]:roi[2]]
 
-    __, dst = cv2.threshold(tmp, 200, 255, cv2.THRESH_BINARY_INV)
-    dst = cv2.morphologyEx(dst, cv2.MORPH_DILATE, kernel, iterations=3) 
-    minImage[roi[1]:roi[3], roi[0]:roi[2]] = cv2.inpaint(minImage[roi[1]:roi[3], roi[0]:roi[2]], dst, 100, cv2.INPAINT_NS)
+    if paint:
+        kernel = np.ones((11, 11), np.uint8) 
+        tmp = minImage-maxImage
+        tmp = tmp[roi[1]:roi[3], roi[0]:roi[2]]
+        __, dst = cv2.threshold(tmp, 200, 255, cv2.THRESH_BINARY_INV)
+        dst = cv2.morphologyEx(dst, cv2.MORPH_DILATE, kernel, iterations=3) 
+        minImage[roi[1]:roi[3], roi[0]:roi[2]] = cv2.inpaint(minImage[roi[1]:roi[3], roi[0]:roi[2]], dst, 100, cv2.INPAINT_NS)
 
 
     cv2.imwrite(path + "/maxProjection.pgm", maxImage)
@@ -66,13 +67,14 @@ def minMax(path, n):
 parser = argparse.ArgumentParser(description="Extract the maximal and minimal z-projection") 
 parser.add_argument("path", nargs='+', help="Path to the folder of the experiment")
 parser.add_argument("-n", dest="number", help="One on n images taken")
+parser.add_argument("--paint", dest="paint", action='store_true', help="Inpainting the min image to correct artifacts")
 args = parser.parse_args()
 success = []
 failure = []
 
 for i in args.path:
   try:
-     minMax(i, int(args.number))
+     minMax(i, int(args.number), args.paint)
      success.append(i)
   except Exception as e:
      failure.append(i)
