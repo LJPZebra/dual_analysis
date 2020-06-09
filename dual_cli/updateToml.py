@@ -5,19 +5,25 @@ import argparse
 import os
 import datetime
 
-def updateToml(path="", fileName=None, dest =""):
+def updateToml(pathToml="", dest =""):
 
-    folders = os.path.abspath(path).split(os.sep)
-    
-    if not fileName:
-        fileName = folders[-2].replace("-", "") + folders[-1].replace("Run ", "").replace(".", "")
-
+    dic = toml.load(pathToml);
+    path = dic["info"]["path"]
 
     trackingData = pandas.read_csv(path + "Tracking_Result/tracking.txt", sep="\t")
+    distanceData = pandas.read_csv(path + "distance.txt", sep="\t")
+
+    tmp = np.zeros(len(trackingData.imageNumber.values))
+    for k, (i, j) in enumerate(zip(trackingData.imageNumber.values, trackingData.id.values)):
+        tmpDist = distanceData[(distanceData.imageNumber == i) & (distanceData.id == j)]
+        if not tmpDist.empty:
+            tmp[k] = (tmpDist.distance.values[0])
+        else:
+            tmp[k] = (np.nan)
+    trackingData["distance"] = tmp
 
     tracking = {}
     objectNumber = np.max(trackingData["id"]) + 1
-    print(objectNumber)
     header = trackingData.columns.values.tolist()
     for i in range(objectNumber):
         data = trackingData[trackingData["id"] == i]
@@ -25,30 +31,22 @@ def updateToml(path="", fileName=None, dest =""):
         for head in header:
             tmpDict[head] = data[head]
         tracking["Fish_" + str(i)] = tmpDict
-
-
-
-
+    dic["tracking"] = tracking
 
     if not dest:
-        dic = toml.load(path + fileName + ".toml");
-        dic["tracking"] = tracking
-        with open(path + fileName + ".toml", "w") as f:
+        with open(pathToml, "w") as f:
             toml.dump(dic, f)
     else:
-        dic = toml.load(dest + fileName + ".toml");
-        dic["tracking"] = tracking
-        with open(dest + fileName + ".toml", "w") as f:
+        with open(dest + ".toml", "w") as f:
             toml.dump(dic, f)
 
 
 parser = argparse.ArgumentParser(description="Update the tracking data of a toml file that contains all the information about the experiment")
-parser.add_argument("path", nargs='+', help="Path to the folder of the experiment")
-parser.add_argument("--name", dest="name", help="Name of the output toml file")
-parser.add_argument("-o", dest="dest", help="Path to a folder to store the toml file")
+parser.add_argument("path", nargs='+', help="Path to the toml file")
+parser.add_argument("-o", dest="dest", help="Path and filename of toml file")
 
 args = parser.parse_args()
 for i in args.path:
   if i:
-    updateToml(i, args.name, args.dest)
+    updateToml(i, args.dest)
 print("Done")

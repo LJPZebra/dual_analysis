@@ -27,3 +27,19 @@ def test_info():
     assert f["experiment"]["concentration"] == 0.02
     assert f["experiment"]["order"] == "BLBR"
     assert f["fish"]["age"] == 7
+
+def test_update():
+    f = toml.load("tests/20200220Test_Run.toml")
+    f["tracking"] = []
+    with open("tests/test.toml", "w") as outFile:
+            toml.dump(f, outFile)
+    #Can't assert directly the dictionary because of nan
+    with open("tests/20200220Test_Run.toml") as inRef:
+        ref = inRef.read()
+    with open("tests/test.toml") as inTest:
+        test = inTest.read()
+    assert ref != test
+    process = subprocess.call(["../venv/bin/python3", "updateToml.py", "tests/test.toml"])
+    with open("tests/test.toml") as inTest:
+        test = inTest.read()
+    assert ref == test
