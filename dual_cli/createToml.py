@@ -27,10 +27,18 @@ def createToml(path="", fileName=None, dest ="", erase=None):
     timestamps = pandas.read_csv(path + "Timestamps.txt", sep="\t", header=None)
     trackingData = pandas.read_csv(path + "Tracking_Result/tracking.txt", sep="\t")
     distanceData = pandas.read_csv(path + "distance.txt", sep="\t")
+    order = "XXXX"
+    with open(path + "Protocol.txt", 'r') as proto:
+        proto.readline().strip() 
+        line = proto.readline().strip() 
+        if line == "# PROTOCOL: BUFFER - LEFT - BUFFER - RIGHT":
+            order = "BLBR"
+        elif line == "# PROTOCOL: BUFFER - RIGHT - BUFFER - LEFT":
+            order = "BRBL"
 
     info = { "title" : fileName, "path" : path, "author" : "Benjamin Gallois" }
     fish = { "age" : int(parameters[1][1]), "date" : datetime.datetime.strptime(parameters[1][0], "%Y-%m-%d"),  "type" : "wt", "remark" : ""}
-    experiment = {"date" : datetime.datetime.strptime(folders[-2], "%Y-%m-%d"), "product" : parameters[1][2].lower(), "concentration" : float(parameters[1][3]), "interface" : "500", "order" : "BRBL", "buffer1" : [int(milestones[0][1]), int(milestones[0][2])], "buffer2" : [int(milestones[0][5]), int(milestones[0][6])], "product1" : [int(milestones[0][3]), int(milestones[0][4])], "product2" : [int(milestones[0][7]), int(timestamps[0].tail(1))]}
+    experiment = {"date" : datetime.datetime.strptime(folders[-2], "%Y-%m-%d"), "product" : parameters[1][2].lower(), "concentration" : float(parameters[1][3]), "interface" : "500", "order" : order, "buffer1" : [int(milestones[0][1]), int(milestones[0][2])], "buffer2" : [int(milestones[0][5]), int(milestones[0][6])], "product1" : [int(milestones[0][3]), int(milestones[0][4])], "product2" : [int(milestones[0][7]), int(timestamps[0].tail(1))]}
     metadata = { "image" : timestamps[0], "time" : timestamps[1] }
 
     tmp = np.zeros(len(trackingData.imageNumber.values))
