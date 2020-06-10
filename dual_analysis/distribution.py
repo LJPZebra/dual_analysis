@@ -11,6 +11,7 @@ from scipy.signal import find_peaks
 from scipy.signal import peak_widths
 import matplotlib as mpl
 from matplotlib.patches import Rectangle
+import toml
 
 
 def Mod1(a, b):
@@ -88,6 +89,57 @@ def findCrossing(dataframe):
     return cross
 
 
+def tomlData(path, iD=0):
+    '''
+    Open a toml file of concatenate data from a Dual experiment
+
+    Parameters
+    ----------
+    path : str
+        path to a toml file, or dict.
+    iD : int, optional
+        Id of the object in to extract from the data. The default is 0.
+
+    Returns
+    -------
+    tracking : pandas dataframe
+        Dataframe containing the data for the selected object.
+
+    '''
+    # Import data
+    factorDist = 30/440
+    factorTime = 1e-9
+    if not isinstance(path, dict):
+        dicTracking = toml.load(path)
+    else:
+        dicTracking = path
+    tracking = pandas.DataFrame(dicTracking["tracking"]["Fish_" + str(iD)])
+    time = pandas.DataFrame(dicTracking["metadata"])
+    tracking["time"]  = time["image"].iloc[tracking["imageNumber"].values].values
+
+    # Separate between cycles:
+    # -1 control buffer
+    # 1 first cycle
+    # 2 second cycle
+    bufferCycle = dicTracking["experiment"]["buffer1"]
+    firstCycle = dicTracking["experiment"]["product1"]
+    secondCycle = dicTracking["experiment"]["product2"]
+    tracking["cycle"] = np.zeros(len(tracking.imageNumber.values))
+    for i, j in enumerate(tracking.imageNumber.values):
+        if j > bufferCycle[0] and j < bufferCycle[1]:
+            tracking["cycle"].iloc[i] = -1
+            tracking["distance"].iloc[i] = 0
+        elif j > firstCycle[0] and j < firstCycle[1]:
+            tracking["cycle"].iloc[i] = 1
+            tracking["distance"].iloc[i] -= 0.001
+        elif j > secondCycle[0] and j < secondCycle[1]:
+            tracking["cycle"].iloc[i] = 2
+            tracking["distance"].iloc[i] += 0.001
+    
+    cross = findCrossing(tracking)
+    tracking["cross"] = cross
+
+    return tracking
 
 def concatenateData(path, iD=0):
     '''

@@ -17,6 +17,17 @@ def test_mod1():
 def test_mod():
     test = [7*0.25*np.pi, 0.25*np.pi, 0.5*np.pi]
     np.testing.assert_equal(np.around(Mod(test), 4), np.around([-0.5*np.pi, -0.25*np.pi], 4))
+
+def test_tomlData():
+    tracking = pandas.read_csv("tests/Test_Run/Tracking_Result/tracking.txt", sep='\t')
+    for i in range(np.max(tracking.id.values) + 1):
+        test = tomlData("tests/test.toml", i).dropna(inplace=True)
+        ref = concatenateData("tests/Test_Run/", i).dropna(inplace=True)
+        assert test == ref
+        dic = toml.load("tests/test.toml")
+        test = tomlData(dic, i).dropna(inplace=True)
+        ref = concatenateData("tests/Test_Run/", i).dropna(inplace=True)
+        assert test == ref
     
 def test_concatenateData():
     tracking = pandas.read_csv("tests/Test_Run/Tracking_Result/tracking.txt", sep='\t')
