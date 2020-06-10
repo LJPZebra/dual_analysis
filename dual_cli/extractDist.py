@@ -27,7 +27,7 @@ import shutil
 
 
 
-def extractInterface(image, minImage, maxImage, data, param):
+def extractInterface(image, minImage, maxImage, data, param, thresh):
 
       # Match tracking ROI, need FastTRack version > 4
       try:
@@ -85,7 +85,10 @@ def extractInterface(image, minImage, maxImage, data, param):
       # Interface detection
       kernel = np.ones((9, 9), np.uint8) 
       dst = cv2.morphologyEx(sub, cv2.MORPH_DILATE, kernel, iterations=1) 
-      __, dst = cv2.threshold(dst, 0, 1, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+      if not thresh:
+          __, dst = cv2.threshold(dst, 0, 1, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+      else:
+        __, bina = cv2.threshold(fish, int(thresh), 255, cv2.THRESH_BINARY_INV)
       dst = cv2.morphologyEx(dst, cv2.MORPH_CLOSE, kernel, iterations=4) 
       dst = cv2.morphologyEx(dst, cv2.MORPH_OPEN, kernel, iterations=4) 
       cnts, __ = cv2.findContours(dst, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -153,7 +156,7 @@ def extractInterface(image, minImage, maxImage, data, param):
 
 
 
-def extractDist(path):
+def extractDist(path, thresh=None):
 
   images = glob.glob(path + "/Frame*pgm")
   images.sort()
@@ -186,7 +189,7 @@ def extractDist(path):
         if not tracking[tracking.imageNumber == i].empty:
             dat = tracking[tracking.imageNumber == i]
             if i in range(firstCycle[0], firstCycle[1]):
-                img, distances, interfaces, objects = extractInterface(cv2.imread(j, flags=cv2.IMREAD_GRAYSCALE), minImage, maxImage, dat, param)
+                img, distances, interfaces, objects = extractInterface(cv2.imread(j, flags=cv2.IMREAD_GRAYSCALE), minImage, maxImage, dat, param, thresh)
                 for k, l in distances:
                   outFile.write(str(i) + '\t' + str(l) + '\t' + str(k) + '\n')
 
@@ -204,7 +207,7 @@ def extractDist(path):
                 plt.savefig(path + "/control/" + str(i) + ".png", dpi=100)
                 plt.clf()
             elif i in range(secondCycle[0], secondCycle[1]):
-                img, distances, interfaces, objects = extractInterface(cv2.imread(j, flags=cv2.IMREAD_GRAYSCALE), minImage, maxImage, dat, param)
+                img, distances, interfaces, objects = extractInterface(cv2.imread(j, flags=cv2.IMREAD_GRAYSCALE), minImage, maxImage, dat, param, thresh)
                 for k, l in distances:
                   outFile.write(str(i) + '\t' + str(l) + '\t' + str(k) + '\n')
 
@@ -226,15 +229,17 @@ def extractDist(path):
 
 parser = argparse.ArgumentParser(description="Extract the closest distance between interface and fish") 
 parser.add_argument("path", nargs='+', help="Path to the folder of the experiment")
+parser.add_argument("--thresh", dest="thresh", default=None, help="Set a manual threshold, default is automatic Otsu")
 args = parser.parse_args()
 success = []
 failure = []
 for i in args.path:
   try:
-     extractDist(i)
+     extractDist(i, thresh=args.thresh)
      success.append(i)
   except Exception as e:
      failure.append(i)
+     print(e)
 
 name = datetime.datetime.now().strftime("%d%m%Y%H%M%S")
 with open(name + ".log", 'w') as f:
