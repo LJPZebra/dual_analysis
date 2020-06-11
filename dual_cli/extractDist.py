@@ -36,6 +36,7 @@ def extractInterface(image, minImage, maxImage, data, param, thresh):
             roi[2] = minImage.shape[1]
         if roi[3] == 0:
             roi[3] = minImage.shape[0]
+        maxArea = param[param[0] == "Maximal size"][1].values
 
       except:
         roi = [5, 50, image.shape[1] - 10, image.shape[0] - 50]
@@ -72,7 +73,7 @@ def extractInterface(image, minImage, maxImage, data, param, thresh):
         __, bina = cv2.threshold(fish, 190, 255, cv2.THRESH_BINARY_INV)
         #_, bina = cv2.threshold(fish, 0, 1, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
         cnts, __ = cv2.findContours(bina, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        fishCnt = [i for i in cnts if (cv2.contourArea(i)>15 and cv2.contourArea(i)<(param[param[0] == "Maximal size"][1].values))]
+        fishCnt = [i for i in cnts if (cv2.contourArea(i)>15 and cv2.contourArea(i)<maxArea)]
         fishCnt = sorted(fishCnt, key=lambda x: cv2.contourArea(x))
         if len(fishCnt) > 0:
           # Check which contour is the fish
