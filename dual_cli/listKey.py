@@ -28,7 +28,7 @@ def check(pathList, concentrations, products, age, outKey, inKey):
   
   out = ""
   for i in outList:
-    out += "'" + i + "'" + " "
+    out += "'" + str(i) + "'" + " "
 
   return out
 
