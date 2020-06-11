@@ -38,8 +38,9 @@ def distribution(path, outPath):
                 buf["time"].extend(l[0])
                 buf["len"].extend(l[2])
                 buf["angle"].extend(l[4])
-                pref.append(l[6])
-        sortData.append((k, buf, prod, pref))
+                if not np.isnan(l[6]) and abs(l[6]) != 1:
+                    pref.append(l[6])
+        sortData.append((i, buf, prod, pref))
 
     ### Full plot
     fig, axs = plt.subplots(len(concentrations), 3, figsize=(10, 10), squeeze=False)
@@ -56,7 +57,7 @@ def distribution(path, outPath):
         axs[i, 1].legend()
         sns.distplot(k["angle"], label="Buffer", ax=axs[i, 2], norm_hist=True, kde=False, kde_kws={"gridsize": 500}, bins=np.linspace(-3, 3, 60))
         sns.distplot(l["angle"], label="Product", ax=axs[i, 2], norm_hist=True, kde=False, kde_kws={"gridsize": 500}, bins=np.linspace(-3, 3, 60))
-        #axs[i, 2].set_xlim(-3.14, 3.14)
+        axs[i, 2].set_xlim(-3.14, 3.14)
         axs[i, 2].set_xlabel("Angle(rad)")
         axs[i, 2].legend()
     fig.savefig(outPath + "/dist_plot.svg")          
@@ -77,7 +78,7 @@ def distribution(path, outPath):
     sns.kdeplot(control[1], label="control", ax=axs2[1], gridsize=500)
     sns.kdeplot(control[2], label="control", ax=axs2[2], gridsize=500)
 
-    axs2[0].set_xlim(0, 5)
+    axs2[0].set_xlim(0, 1)
     axs2[0].set_xlabel("Time (seconds)")
     axs2[0].legend()
     axs2[1].set_xlim(0, 25)
@@ -93,10 +94,10 @@ def distribution(path, outPath):
     fig3, ax3 = plt.subplots()
     pindex = []
     concentrations = []
-    for _, (i, __, __, j) in enumerate(sortData):
-        concentrations.append(i)
+    for i, __, __, j in sortData:
+        concentrations.append(str(i))
         pindex.append(j)
-    ax3.boxplot(pindex, positions=concentrations)
+    ax3.boxplot(pindex, labels=concentrations)
     ax3.set_xlabel("Concentration M")
     ax3.set_ylim(-1, 1)
     fig3.savefig(outPath + "/pref_index.svg")          

@@ -115,7 +115,7 @@ def tomlData(path, iD=0):
         dicTracking = path
     tracking = pandas.DataFrame(dicTracking["tracking"]["Fish_" + str(iD)])
     time = pandas.DataFrame(dicTracking["metadata"])
-    tracking["time"]  = time["image"].iloc[tracking["imageNumber"].values].values
+    tracking["time"]  = time["time"].iloc[tracking["imageNumber"].values].values
 
     # Separate between cycles:
     # -1 control buffer
