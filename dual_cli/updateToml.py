@@ -5,7 +5,7 @@ import argparse
 import os
 import datetime
 
-def updateToml(pathToml="", dest =""):
+def updateToml(pathToml="", dest=None):
 
     dic = toml.load(pathToml);
     path = dic["info"]["path"]
@@ -43,7 +43,7 @@ def updateToml(pathToml="", dest =""):
 
 parser = argparse.ArgumentParser(description="Update the tracking data of a toml file that contains all the information about the experiment")
 parser.add_argument("path", nargs='+', help="Path to the toml file")
-parser.add_argument("-o", dest="dest", help="Path and filename of toml file")
+parser.add_argument("-o", dest="dest", default=None, help="Path and filename of toml file")
 
 args = parser.parse_args()
 for i in args.path:
