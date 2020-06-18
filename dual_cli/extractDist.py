@@ -36,10 +36,11 @@ def extractInterface(image, minImage, maxImage, data, param, thresh):
             roi[2] = minImage.shape[1]
         if roi[3] == 0:
             roi[3] = minImage.shape[0]
-        maxArea = param[param[0] == "Maximal size"][1].values
+        maxArea = float(param[param[0] == "Maximal size"][1].values)
 
       except:
         roi = [5, 50, image.shape[1] - 10, image.shape[0] - 50]
+        maxArea = 9000
 
 
       # Normalization by min and max projection

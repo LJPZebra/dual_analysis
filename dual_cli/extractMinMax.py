@@ -44,12 +44,15 @@ def minMax(path, n, paint = True):
             tmp[y[0]:y[1], x[0]:x[1]] = np.ones(sub.shape)*255
           minImage = cv2.min(tmp, minImage)
 
-    param = pandas.read_csv(path + "/Tracking_Result/parameter.param", sep = ' = ', header = None)
-    roi = [int(param[param[0] == "ROI top x"][1].values), int(param[param[0] == "ROI top y"][1].values), int(param[param[0] == "ROI bottom x"][1].values), int(param[param[0] == "ROI bottom y"][1].values)]
-    if roi[2] == 0:
-        roi[2] = minImage.shape[1]
-    if roi[3] == 0:
-        roi[3] = minImage.shape[0]
+    try:
+        param = pandas.read_csv(path + "/Tracking_Result/parameter.param", sep = ' = ', header = None)
+        roi = [int(param[param[0] == "ROI top x"][1].values), int(param[param[0] == "ROI top y"][1].values)+25, int(param[param[0] == "ROI bottom x"][1].values), int(param[param[0] == "ROI bottom y"][1].values)]
+        if roi[2] == 0:
+            roi[2] = minImage.shape[1]
+        if roi[3] == 0:
+            roi[3] = minImage.shape[0]
+    except:
+        roi = [0, 0, image.shape[1], image.shape[0]]
 
     if paint:
         kernel = np.ones((11, 11), np.uint8) 
