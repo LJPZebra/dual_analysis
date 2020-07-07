@@ -78,10 +78,19 @@ def extractInterface(image, minImage, maxImage, data, param, thresh):
         fishCnt = sorted(fishCnt, key=lambda x: cv2.contourArea(x))
         if len(fishCnt) > 0:
           # Check which contour is the fish
+          dists = []
+          isFound = False
           for i, j in enumerate(fishCnt):
-            if cv2.pointPolygonTest(j, (150 - xOffset, 150 - yOffset), measureDist=False) == 1:
+            distCont =  cv2.pointPolygonTest(j, (150 - xOffset, 150 - yOffset), measureDist=True)
+            if distCont >= 0:
               obj.append((row.id, j))
+              isFound = True
               break
+            else:
+                dists.append(distCont)
+          if not isFound:
+               arg = np.argmax(dists)
+               obj.append((row.id, fishCnt[arg]))
 
 
       # Interface detection
@@ -160,7 +169,10 @@ def extractInterface(image, minImage, maxImage, data, param, thresh):
 
 def extractDist(path, thresh=None):
 
-  images = glob.glob(path + "/Frame*pgm")
+  if os.path.isfile(path + "/distance.txt"):
+      os.replace(path + "distance.txt", path + "distance.txt.bak2")
+
+  images = glob.glob(path + "/Frame*p*")
   images.sort()
   tracking = pandas.read_csv(path + "/Tracking_Result/tracking.txt", sep='\t')
   meta = pandas.read_csv(path + "/Milestones.txt", sep='\t', header=None)
