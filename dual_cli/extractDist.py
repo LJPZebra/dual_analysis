@@ -24,7 +24,27 @@ import shutil
 
 '''
 
+def Mod1(a, b):
+    '''
+    Compute the minimal difference between to angles.
 
+    Parameters
+    ----------
+    a : float
+    First angle 0 to 2pi.
+    b : float
+    Second angle 0 to 2pi.
+
+    Returns
+    -------
+    TYPE
+    (a - b) minimal angle 0 to pi.
+
+    '''
+    def modul(a): return a - 2 * np.pi * np.floor(a / (2 * np.pi))
+    a = modul(a)
+    b = modul(b)
+    return -(modul(a - b + np.pi) - np.pi)
 
 
 def extractInterface(image, minImage, maxImage, data, param, thresh):
@@ -140,12 +160,20 @@ def extractInterface(image, minImage, maxImage, data, param, thresh):
       for o in obj:
         fishShape = []
         tmpData = data[data.id == o[0]]
-        x = np.array((int(tmpData.xBody) - roi[0] - 150, int(tmpData.xBody) - roi[0] + 150))
-        y = np.array((int(tmpData.yBody) - roi[1] - 150, int(tmpData.yBody) - roi[1] + 150))
+        x = np.array((int(tmpData.xBody.values[0]) - roi[0] - 150, int(tmpData.xBody.values[0]) - roi[0] + 150))
+        y = np.array((int(tmpData.yBody.values[0]) - roi[1] - 150, int(tmpData.yBody.values[0]) - roi[1] + 150))
         y = y.clip(0, sub.shape[0])
         x = x.clip(0, sub.shape[1])
         for i in o[1]:
-            fishShape.append((i[0][0] + x[0], i[0][1] + y[0]))
+            xFish = i[0][0] + x[0]
+            yFish = i[0][1] + y[0]
+            r = ((xFish - tmpData.xHead.values[0] + roi[0])**2 + (yFish - tmpData.yHead.values[0] + roi[1])**2)**0.5
+            if  yFish > tmpData.yHead.values[0] - roi[1]:
+                angle = -np.arccos((xFish - tmpData.xHead.values[0] + roi[0])/r) + 2*np.pi 
+            elif  yFish <= tmpData.yHead.values[0] - roi[1]:
+                angle = np.arccos((xFish - tmpData.xHead.values[0] + roi[0])/r)
+            if np.abs(Mod1(angle, tmpData.tHead.values[0])) >= 0 and np.abs(Mod1(angle, tmpData.tHead.values[0])) <= np.pi*0.5:
+                fishShape.append((xFish, yFish))
         fishShape = np.asarray(fishShape)
         objectShapes.append((o[0], fishShape))
 
