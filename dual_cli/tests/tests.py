@@ -13,7 +13,7 @@ def test_add_distance():
     process = subprocess.call(["../venv/bin/python3", "createToml.py", "tests/2020-02-20/Test_Run/", "-o", "tests/"])
     f = toml.load("tests/20200220Test_Run.toml")
 
-    for l in range(np.max(tracking.id.values + 1)):
+    for l in set(tracking.id.values):
         for k, (i, j) in enumerate(zip(f["tracking"]["Fish_" + str(l)]["imageNumber"], f["tracking"]["Fish_" + str(l)]["distance"])):
             if not np.isnan(j):
                 assert np.around((j), 3) == np.around(distance[(distance.imageNumber == i) & (distance.id == l)].distance.values[0], 3)

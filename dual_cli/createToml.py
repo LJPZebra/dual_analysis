@@ -51,9 +51,9 @@ def createToml(path="", fileName=None, dest ="", erase=None):
     trackingData["distance"] = tmp
 
     tracking = {}
-    objectNumber = np.max(trackingData["id"]) + 1
+    objects = set(trackingData["id"].values)
     header = trackingData.columns.values.tolist()
-    for i in range(objectNumber):
+    for i in objects:
         data = trackingData[trackingData["id"] == i]
         tmpDict = {}
         for head in header:
